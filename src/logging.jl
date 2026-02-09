@@ -3,14 +3,7 @@
 # MIT license, part of https://github.com/JuliaActors
 #
 
-#
-# the following is needed for giving a warning from a thread. 
-# see: https://github.com/JuliaLang/julia/issues/35689
-# 
-enable_finalizers(on::Bool) = ccall(:jl_gc_enable_finalizers, Cvoid, (Ptr{Cvoid}, Int32,), Core.getptls(), on)
-
 const date_format = "yyyy-mm-dd HH:MM:SS"
-const _WARN = [true]
 
 tid(t::Task=current_task()) = convert(UInt, pointer_from_objref(t))
 pqtid(t::Task=current_task()) = uint2quint(tid(t), short=true)
@@ -34,16 +27,10 @@ function log_warn(msg::Exit, info::String="")
             "Exit: $info $(msg.reason)")
 end
 function log_warn(s::String)
-    if _WARN[1]
-        enable_finalizers(false)
-        @warn "$(Dates.format(now(), date_format)) $(id()) $s"
-        enable_finalizers(true)
-    end
+    @warn "$(Dates.format(now(), date_format)) $(id()) $s"
 end
 
 function log_error(s::String, ex::Exception, bt=nothing)
-    enable_finalizers(false)
     exc = isnothing(bt) ? ex : (ex,bt)
     @error "$(Dates.format(now(), date_format)) $(id()) $s" exception=exc
-    enable_finalizers(true)
 end
